@@ -2,103 +2,141 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Nexus IA - Acceso Directo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#030303">
+    
+    <title>Nexus IA - Desktop & Mobile</title>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         :root { 
             --bg: #030303; --side-bg: #080808; --card: #121214; --text: #ffffff;
             --primary: #0041C2; --accent-red: #ef4444; --accent-orange: #f59e0b;
             --accent-green: #10b981; --accent-purple: #8b5cf6; --accent-lila: #c084fc;
-            --accent-celeste: #0ea5e9; --gray: #1f1f22;
+            --accent-celeste: #0ea5e9; --gray: #1f1f22; --download-btn: #238636;
         }
 
-        body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        
+        body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; display: flex; height: 100vh; overflow: hidden; }
 
         #toggle-menu {
             position: fixed; top: 15px; left: 15px;
             background: var(--card); border: 1px solid var(--gray);
-            color: white; width: 40px; height: 40px; border-radius: 8px;
-            cursor: pointer; z-index: 1000; font-size: 20px; display: flex; align-items: center; justify-content: center;
+            color: white; width: 45px; height: 45px; border-radius: 12px;
+            cursor: pointer; z-index: 1000; font-size: 24px; display: flex; align-items: center; justify-content: center;
         }
 
         #sidebar { 
-            width: 300px; background: var(--side-bg); padding: 70px 15px 20px;
+            width: 280px; background: var(--side-bg); padding: 70px 15px 20px;
             border-right: 1px solid var(--gray); transition: transform 0.3s ease;
             display: flex; flex-direction: column; gap: 15px; flex-shrink: 0;
+            position: fixed; height: 100%; z-index: 999;
         }
-        #sidebar.collapsed { transform: translateX(-300px); width: 0; padding: 70px 0; border: none; }
+        
+        @media (min-width: 768px) { #sidebar { position: relative; } }
+        #sidebar.collapsed { transform: translateX(-100%); }
 
-        h2 { text-align: center; background: linear-gradient(90deg, var(--accent-lila), var(--accent-celeste)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; font-size: 1.5rem; }
+        h2 { text-align: center; background: linear-gradient(90deg, var(--accent-lila), var(--accent-celeste)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin: 0; font-size: 1.8rem; letter-spacing: 2px; }
 
-        .btn-new { background: var(--accent-green); color: white; padding: 12px; border-radius: 8px; border: none; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        .btn-new:hover { filter: brightness(1.2); }
+        /* Estilo del Botón de Descarga */
+        .download-container {
+            background: rgba(35, 134, 54, 0.1);
+            border: 1px solid var(--download-btn);
+            padding: 12px;
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 5px;
+        }
+        .btn-download {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: var(--download-btn);
+            color: white;
+            text-decoration: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .btn-download:hover { filter: brightness(1.2); transform: translateY(-2px); }
 
-        #chat-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+        .btn-new { background: var(--accent-green); color: white; padding: 15px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; width: 100%; font-size: 14px; }
+
+        #chat-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .chat-item-container { position: relative; display: flex; align-items: center; }
         .chat-item { 
-            flex: 1; padding: 12px 40px 12px 12px; background: rgba(255,255,255,0.03); 
-            border-radius: 8px; cursor: pointer; font-size: 13px; color: #a1a1aa;
+            flex: 1; padding: 15px; background: rgba(255,255,255,0.03); 
+            border-radius: 12px; cursor: pointer; font-size: 14px; color: #a1a1aa;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border: 1px solid transparent;
         }
         .chat-item.active { background: rgba(0, 65, 194, 0.15); border-color: var(--primary); color: white; }
-        .btn-del { position: absolute; right: 10px; background: none; border: none; color: var(--accent-red); cursor: pointer; font-weight: bold; font-size: 16px; opacity: 0.6; }
+        .btn-del { position: absolute; right: 10px; background: none; border: none; color: var(--accent-red); cursor: pointer; font-size: 18px; opacity: 0.5; }
 
-        /* Modal de Advertencia */
-        #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 2000; align-items: center; justify-content: center; }
-        .modal { background: var(--card); padding: 30px; border-radius: 15px; border: 1px solid var(--accent-red); text-align: center; width: 90%; max-width: 350px; }
-        .modal-btns { display: flex; gap: 10px; justify-content: center; margin-top: 20px; }
-        .btn-confirm { background: var(--accent-red); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
-        .btn-cancel { background: var(--gray); color: white; padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; }
-
-        #main { flex: 1; display: flex; flex-direction: column; position: relative; }
-        #chat { flex: 1; overflow-y: auto; padding: 80px 15% 40px; display: flex; flex-direction: column; gap: 20px; }
+        #main { flex: 1; display: flex; flex-direction: column; width: 100%; }
+        #chat { flex: 1; overflow-y: auto; padding: 80px 20px 20px; display: flex; flex-direction: column; gap: 20px; }
         
-        .msg { max-width: 80%; padding: 15px 20px; border-radius: 18px; line-height: 1.6; }
+        .msg { max-width: 85%; padding: 15px; border-radius: 20px; line-height: 1.5; font-size: 15px; }
         .user { align-self: flex-end; background: linear-gradient(135deg, var(--accent-red), var(--accent-orange)); color: white; }
-        .ai { align-self: flex-start; background: var(--card); border-left: 4px solid var(--accent-purple); }
+        .ai { align-self: flex-start; background: var(--card); border: 1px solid var(--gray); }
 
-        #input-area { padding: 25px 15%; background: rgba(3,3,3,0.95); border-top: 1px solid var(--gray); display: flex; gap: 12px; align-items: center; }
-        #user-input { flex: 1; background: #0d0d0f; border: 1px solid var(--gray); border-radius: 12px; color: white; padding: 12px; height: 45px; resize: none; outline: none; }
-        #send-btn { background: var(--primary); color: white; border: none; padding: 12px 25px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+        #input-area { padding: 15px; background: #030303; border-top: 1px solid var(--gray); display: flex; gap: 10px; padding-bottom: calc(15px + env(safe-area-inset-bottom)); }
+        #user-input { flex: 1; background: #121214; border: 1px solid var(--gray); border-radius: 20px; color: white; padding: 12px 18px; height: 48px; resize: none; outline: none; font-size: 16px; }
+        #send-btn { background: var(--primary); color: white; border: none; width: 48px; height: 48px; border-radius: 50%; cursor: pointer; font-size: 18px; }
+
+        #modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .modal { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid var(--accent-red); text-align: center; width: 100%; max-width: 300px;}
     </style>
 </head>
 <body>
 
 <div id="modal-overlay">
     <div class="modal">
-        <h3 style="color: var(--accent-red)">⚠️ ADVERTENCIA</h3>
-        <p>¿Estás seguro de que quieres eliminar esta conversación?</p>
-        <div class="modal-btns">
-            <button class="btn-confirm" onclick="confirmDelete()">Sí, borrar</button>
-            <button class="btn-cancel" onclick="closeModal()">No</button>
+        <h3 style="color: var(--accent-red)">¿Eliminar chat?</h3>
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button onclick="confirmDelete()" style="flex:1; background: var(--accent-red); color:white; border:none; padding:12px; border-radius:10px; font-weight:bold;">Borrar</button>
+            <button onclick="closeModal()" style="flex:1; background: var(--gray); color:white; border:none; padding:12px; border-radius:10px;">No</button>
         </div>
     </div>
 </div>
 
 <button id="toggle-menu" onclick="toggleSidebar()">≡</button>
 
-<div id="sidebar">
-    <h2>NEXUS IA</h2>
-    <button class="btn-new" onclick="createNewChat()">+ NUEVO CHAT</button>
+<div id="sidebar" class="collapsed">
+    <h2>NEXUS</h2>
+    
+    <div class="download-container">
+        <p style="font-size: 10px; color: var(--download-btn); margin: 0 0 8px 0; font-weight: bold;">DISPONIBLE PARA PC</p>
+        <a href="https://github.com/ataldana123-dot/nexus-ia/releases/download/v1.0.0/nexus-ia.1.0.0.exe" class="btn-download">
+            <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+            </svg>
+            Descargar App (.exe)
+        </a>
+    </div>
+
+    <button class="btn-new" onclick="createNewChat()">+ NUEVA CHARLA</button>
     <div id="chat-list"></div>
-    <div style="font-size: 10px; color: var(--accent-celeste); text-align: center; opacity: 0.5;">Nexus Core v2.0 - Online</div>
+    <div style="font-size: 10px; color: #444; text-align: center;">Nexus IA v2.5 Stable</div>
 </div>
 
 <div id="main">
     <div id="chat"></div>
     <div id="input-area">
-        <textarea id="user-input" placeholder="Pregunta lo que quieras..."></textarea>
-        <button id="send-btn" onclick="sendMessage()">Enviar</button>
+        <textarea id="user-input" placeholder="Escribe aquí..."></textarea>
+        <button id="send-btn" onclick="sendMessage()">➔</button>
     </div>
 </div>
 
 <script>
-    // ==========================================
-    // CONFIGURACIÓN DE LA API (PEGAR AQUÍ TU KEY)
-    // ==========================================
-    const MI_API_KEY = "AIzaSyB-cIOQ2cKKsqrND4jgwpBhJH7yfc-AiJ8"; 
-    const MODELO_USADO = "gemini-2.5-flash"; // Usamos flash para mayor velocidad y menos consumo de cuota
-    // ==========================================
+    // CONFIGURACIÓN
+    const MI_API_KEY = "TU_API_KEY_AQUI"; // REEMPLAZA CON TU KEY
+    const MODELO_USADO = "gemini-2.0-flash";
 
     let chats = JSON.parse(localStorage.getItem('nexus_chats') || '{}');
     let currentId = null;
@@ -116,13 +154,14 @@
         const id = 'c_' + Date.now();
         chats[id] = { title: "Nuevo Chat", history: [] };
         saveData(); loadChat(id);
+        if(window.innerWidth < 768) toggleSidebar();
     }
 
     function loadChat(id) {
         currentId = id;
         renderSidebar();
         const box = document.getElementById('chat');
-        box.innerHTML = chats[id].history.length === 0 ? '<div class="msg ai">¡Hola! Soy Nexus. He sido configurado para responderte de inmediato. ¿En qué puedo ayudarte?</div>' : '';
+        box.innerHTML = chats[id].history.length === 0 ? '<div class="msg ai"><b>Nexus IA Conectada.</b> ¿En qué puedo ayudarte hoy?</div>' : '';
         
         chats[id].history.forEach(m => {
             const div = document.createElement('div');
@@ -131,6 +170,7 @@
             box.appendChild(div);
         });
         box.scrollTop = box.scrollHeight;
+        if(window.innerWidth < 768 && !document.getElementById('sidebar').classList.contains('collapsed')) toggleSidebar();
     }
 
     function renderSidebar() {
@@ -157,7 +197,7 @@
         if (!MI_API_KEY || MI_API_KEY === "TU_API_KEY_AQUI" || !input.value.trim()) return;
 
         const userText = input.value.trim();
-        if (chats[currentId].history.length === 0) chats[currentId].title = userText.substring(0, 25);
+        if (chats[currentId].history.length === 0) chats[currentId].title = userText.substring(0, 20);
 
         chats[currentId].history.push({ role: "user", parts: [{ text: userText }] });
         loadChat(currentId);
@@ -166,7 +206,7 @@
         const box = document.getElementById('chat');
         const loading = document.createElement('div');
         loading.className = 'msg ai'; 
-        loading.innerHTML = '<span style="color:var(--accent-celeste)">Nexus pensando...</span>';
+        loading.innerHTML = '<i>Nexus respondiendo...</i>';
         box.appendChild(loading);
         box.scrollTop = box.scrollHeight;
 
@@ -177,15 +217,11 @@
                 body: JSON.stringify({ contents: chats[currentId].history })
             });
             const d = await r.json();
-            
-            if(d.error) throw new Error(d.error.message);
-            
             const reply = d.candidates[0].content.parts[0].text;
             chats[currentId].history.push({ role: "model", parts: [{ text: reply }] });
-            saveData(); 
-            loadChat(currentId);
+            saveData(); loadChat(currentId);
         } catch(e) {
-            loading.innerHTML = `<span style="color:var(--accent-red)">Error: ${e.message}</span>`;
+            loading.innerHTML = `<span style="color:var(--accent-red)">Error al conectar con Nexus.</span>`;
         }
     }
 
